@@ -3,18 +3,21 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Slack Lite — Self-hosted Team Chat",
-  description: "Lightweight self-hosted team chat. Channels, threads, real-time messaging. Zero signup, zero BS.",
-  openGraph: {
-    title: "Slack Lite",
-    description: "Self-hosted team chat — lightweight, real-time, zero signup",
-    type: "website",
-  },
+  description: "Lightweight self-hosted team chat. Channels, real-time messages, zero signup.",
+  icons: { icon: "/favicon.ico" },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="antialiased">{children}</body>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+      </head>
+      <body style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif" }}>
+        {children}
+      </body>
     </html>
   );
 }
