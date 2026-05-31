@@ -47,7 +47,7 @@ export default function Home() {
   const [username, setUsername] = useState('');
   const [joined, setJoined] = useState(false);
   const [channels, setChannels] = useState<Channel[]>([]);
-  const [activeChannel, setActiveChannel] = useState<string>('general');
+  const [activeChannel, setActiveChannel] = useState<string>('ch_general');
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [showCreate, setShowCreate] = useState(false);
