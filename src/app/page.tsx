@@ -77,34 +77,20 @@ export default function Home() {
 
   // Fetch messages
   const fetchMessages = useCallback(async (channelId: string) => {
-    const res = await fetch(`/api/messages?channelId=${channelId}`);
-    const data = await res.json();
-    setMessages(data.messages || []);
+    try {
+      const res = await fetch(`/api/messages?channelId=${channelId}`);
+      const data = await res.json();
+      setMessages(data.messages || []);
+    } catch {}
   }, []);
 
-  // SSE subscription
+  // Poll messages every 3s (SSE unreliable on Vercel)
   useEffect(() => {
     if (!joined || !activeChannel) return;
 
     fetchMessages(activeChannel);
-
-    const es = new EventSource(`/api/sse?channelId=${activeChannel}`);
-
-    es.onmessage = (event) => {
-      try {
-        const { type, data } = JSON.parse(event.data);
-        if (type === 'new_message') {
-          setMessages(prev => [...prev, data]);
-        }
-      } catch {}
-    };
-
-    es.onerror = () => {
-      es.close();
-      setTimeout(() => fetchMessages(activeChannel), 3000);
-    };
-
-    return () => es.close();
+    const interval = setInterval(() => fetchMessages(activeChannel), 3000);
+    return () => clearInterval(interval);
   }, [joined, activeChannel, fetchMessages]);
 
   // Fetch channels on join
@@ -134,11 +120,16 @@ export default function Home() {
     setInput('');
     setSending(true);
 
-    await fetch('/api/messages', {
+    const res = await fetch('/api/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ channelId: activeChannel, userId, username, content }),
     });
+
+    // Immediately fetch messages so it appears without waiting for poll
+    if (res.ok) {
+      await fetchMessages(activeChannel);
+    }
 
     setSending(false);
     inputRef.current?.focus();
