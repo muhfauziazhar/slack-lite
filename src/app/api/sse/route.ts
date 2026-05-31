@@ -12,39 +12,35 @@ export async function GET(request: Request) {
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     start(controller) {
-      // Send initial connection message
-      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'connected', channelId })}\n\n`));
+      // Send keepalive comment every 15s
+      const keepalive = setInterval(() => {
+        try { controller.enqueue(encoder.encode(': keepalive\n\n')); } catch {}
+      }, 15000);
 
-      // Subscribe to channel events
       const unsubscribe = subscribe(channelId, (event) => {
         try {
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
-        } catch {}
-      });
-
-      // Keep-alive ping
-      const ping = setInterval(() => {
-        try {
-          controller.enqueue(encoder.encode(': ping\n\n'));
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify(event)}\n\n`)
+          );
         } catch {
-          clearInterval(ping);
+          unsubscribe();
         }
-      }, 30000);
+      });
 
       // Cleanup on close
       request.signal.addEventListener('abort', () => {
+        clearInterval(keepalive);
         unsubscribe();
-        clearInterval(ping);
         try { controller.close(); } catch {}
       });
     },
   });
 
-  return new NextResponse(stream, {
+  return new Response(stream, {
     headers: {
       'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive',
+      'Cache-Control': 'no-cache, no-transform',
+      Connection: 'keep-alive',
     },
   });
 }
